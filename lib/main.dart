@@ -34,8 +34,8 @@ class MyHomePage extends StatelessWidget {
 
   // String inputTitle;
   // String inputAmount;`
-  final titleController = TextEditingController();
-  final amountController = TextEditingController();
+  final titleController = TextEditingController(); // Nos ayudan a controlar texto
+  final amountController = TextEditingController(); // A solution Flutter also likes in a stateless widg
 
   @override
   Widget build(BuildContext context) {
