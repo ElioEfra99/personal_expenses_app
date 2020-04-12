@@ -5,13 +5,14 @@ import 'dart:io';
 
 // Then all packages
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+// import 'package:flutter/services.dart';
 
 // Then your own imports
 import './widgets/new_transaction.dart';
 import './models/transaction.dart';
 import 'widgets/transaction_list.dart';
 import './widgets/chart.dart';
-// import 'package:flutter/services.dart';
 
 void main() {
   runApp(MyApp());
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
           fontFamily: 'Quicksand',
           textTheme: ThemeData.light().textTheme.copyWith(
                 title: TextStyle(
-                    fontFamily: 'Open Sans',
+                    fontFamily: 'Open Sans', 
                     fontSize: 18,
                     fontWeight: FontWeight.bold),
                 button: TextStyle(color: Colors.white),
@@ -127,15 +128,28 @@ class _MyHomePageState extends State<MyHomePage> {
     final mediaQuery = MediaQuery.of(context);
     final isLandscape = mediaQuery.orientation == Orientation.landscape;
 
-    final appBar = AppBar(
-      title: Text('Personal Expenses'),
-      actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.add), // color: Colors.black,
-          onPressed: () => _startAddNewTransaction(context),
-        ),
-      ],
-    );
+    final PreferredSizeWidget appBar = Platform.isIOS
+        ? CupertinoNavigationBar(
+            middle: Text('Personal Expenses'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                GestureDetector(
+                  child: Icon(CupertinoIcons.add),
+                  onTap: () => _startAddNewTransaction(context),
+                )
+              ],
+            ),
+          )
+        : AppBar(
+            title: Text('Personal Expenses'),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.add), // color: Colors.black,
+                onPressed: () => _startAddNewTransaction(context),
+              ),
+            ],
+          );
 
     final txWidget = Container(
       height: (mediaQuery.size.height -
@@ -145,9 +159,8 @@ class _MyHomePageState extends State<MyHomePage> {
       child: TransactionList(_userTransactions, _deleteTransaction),
     );
 
-    return Scaffold(
-      appBar: appBar,
-      body: SingleChildScrollView(
+    final pageBody = SafeArea(
+      child: SingleChildScrollView(
         // This is for not having the keyboard overflow
         child: Column(
           // mainAxisAlignment: MainAxisAlignment.start,
@@ -157,8 +170,11 @@ class _MyHomePageState extends State<MyHomePage> {
               Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    Text('Show Chart'),
-                    Switch(
+                    Text(
+                      'Show Chart',
+                      style: Theme.of(context).textTheme.title,
+                    ),
+                    Switch.adaptive(
                       value: _showChart,
                       onChanged: (val) {
                         setState(() {
@@ -189,13 +205,24 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Platform.isIOS
-          ? Container()
-          : FloatingActionButton(
-              child: Icon(Icons.add),
-              onPressed: () => _startAddNewTransaction(context),
-            ),
     );
+
+    return Platform.isIOS
+        ? CupertinoPageScaffold(
+            child: pageBody,
+            navigationBar: appBar,
+          )
+        : Scaffold(
+            appBar: appBar,
+            body: pageBody,
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+            floatingActionButton: Platform.isIOS
+                ? Container()
+                : FloatingActionButton(
+                    child: Icon(Icons.add),
+                    onPressed: () => _startAddNewTransaction(context),
+                  ),
+          );
   }
 }
