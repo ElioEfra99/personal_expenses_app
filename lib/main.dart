@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
           fontFamily: 'Quicksand',
           textTheme: ThemeData.light().textTheme.copyWith(
                 title: TextStyle(
-                    fontFamily: 'Open Sans', 
+                    fontFamily: 'Open Sans',
                     fontSize: 18,
                     fontWeight: FontWeight.bold),
                 button: TextStyle(color: Colors.white),
@@ -60,7 +60,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   final List<Transaction> _userTransactions = [
     // Transaction(
     //   id: 't1',
@@ -76,6 +76,23 @@ class _MyHomePageState extends State<MyHomePage> {
     // ),
   ];
 
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print(state);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.addObserver(this);
+    super.dispose();
+  }
+
   bool _showChart = false;
 
   List<Transaction> get _recentTransactions {
@@ -88,7 +105,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _addNewTransaction(
-      String txTitle, double txAmount, DateTime chosenDate) {
+    String txTitle,
+    double txAmount,
+    DateTime chosenDate,
+  ) {
     final newTx = Transaction(
       title: txTitle,
       amount: txAmount,
@@ -104,6 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _startAddNewTransaction(BuildContext ctx) {
     showModalBottomSheet(
         context: ctx,
+        isScrollControlled: true,
         builder: (_) {
           // builder is a function that needs to return the widget
           return GestureDetector(
@@ -123,12 +144,54 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+  List<Widget> _buildLandscapeContent(
+      MediaQueryData mediaQuery, AppBar appBar, Widget txListWidget) {
+    return [
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+        Text(
+          'Show Chart',
+          style: Theme.of(context).textTheme.title,
+        ),
+        Switch.adaptive(
+          value: _showChart,
+          onChanged: (val) {
+            setState(() {
+              _showChart = val;
+            });
+          },
+        ),
+      ]),
+      _showChart
+          ? Container(
+              height: (mediaQuery.size.height -
+                      appBar.preferredSize.height -
+                      mediaQuery.padding.top) *
+                  0.7,
+              child: Chart(_recentTransactions),
+            )
+          : txListWidget
+    ];
+  }
 
-    final PreferredSizeWidget appBar = Platform.isIOS
+  List<Widget> _buildPortraitContent(
+    MediaQueryData mediaQuery,
+    AppBar appBar,
+    Widget txListWidget,
+  ) {
+    return [
+      Container(
+        height: (mediaQuery.size.height -
+                appBar.preferredSize.height -
+                mediaQuery.padding.top) *
+            0.3,
+        child: Chart(_recentTransactions),
+      ),
+      txListWidget
+    ];
+  }
+
+  Widget _buildNavBar() {
+    return Platform.isIOS
         ? CupertinoNavigationBar(
             middle: Text('Personal Expenses'),
             trailing: Row(
@@ -150,8 +213,16 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ],
           );
+  }
 
-    final txWidget = Container(
+  @override
+  Widget build(BuildContext context) {
+    print('build() MyHomePageState');
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+    final PreferredSizeWidget appBar = _buildNavBar();
+
+    final txListWidget = Container(
       height: (mediaQuery.size.height -
               appBar.preferredSize.height -
               mediaQuery.padding.top) *
@@ -167,41 +238,11 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             if (isLandscape)
-              Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text(
-                      'Show Chart',
-                      style: Theme.of(context).textTheme.title,
-                    ),
-                    Switch.adaptive(
-                      value: _showChart,
-                      onChanged: (val) {
-                        setState(() {
-                          _showChart = val;
-                        });
-                      },
-                    ),
-                  ]),
+              ..._buildLandscapeContent(mediaQuery, appBar, txListWidget),
             if (!isLandscape)
-              Container(
-                height: (mediaQuery.size.height -
-                        appBar.preferredSize.height -
-                        mediaQuery.padding.top) *
-                    0.3,
-                child: Chart(_recentTransactions),
-              ),
-            if (!isLandscape) txWidget,
-            if (isLandscape)
-              _showChart
-                  ? Container(
-                      height: (mediaQuery.size.height -
-                              appBar.preferredSize.height -
-                              mediaQuery.padding.top) *
-                          0.7,
-                      child: Chart(_recentTransactions),
-                    )
-                  : txWidget
+              ..._buildPortraitContent(mediaQuery, appBar, txListWidget),
+            // Spread operator, in front of a list, it tells dart that you want to pull all elements out of that list
+            // and merge them as single elements into that surounding list 'children: <Widget> {}
           ],
         ),
       ),

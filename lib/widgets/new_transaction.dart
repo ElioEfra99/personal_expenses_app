@@ -7,13 +7,42 @@ import 'package:personal_expenses_app/widgets/adaptive_flat_button.dart';
 class NewTransaction extends StatefulWidget {
   final Function addTx;
 
-  NewTransaction(this.addTx);
+  NewTransaction(this.addTx) {
+    print('Constructor NewTransaction Widget');
+  }
 
   @override
-  _NewTransactionState createState() => _NewTransactionState();
+  _NewTransactionState createState() {
+    print('createState() NewTransaction Widget');
+    return _NewTransactionState();
+
+  }
 }
 
-class _NewTransactionState extends State<NewTransaction> {
+class _NewTransactionState extends State<NewTransaction> { // This one
+  _NewTransactionState() {
+    print('Conostructor _NewTransactionState Widget');
+  }
+
+  @override
+  void initState() {
+    print('initState()'); // Dart docs state that we should call super and then our code, this time, it will be ok.
+    super.initState(); // super is a keyword in dart which refers to the parent class, refers to the State object
+    // This means, also call the method that is there in the State class, not only this.
+  }
+
+  @override
+  void didUpdateWidget(NewTransaction oldWidget) {
+    print('didUpdateWidget()');
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    print('dispose');
+    super.dispose();
+  }
+
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime _selectedDate;
